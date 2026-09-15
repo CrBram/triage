@@ -4,6 +4,7 @@ import { useState, type FormEvent, type KeyboardEvent } from "react";
 import type { TriageMessage } from "@/mastra/triage";
 import type { TriageResult, TriageTurn, Urgency } from "@/mastra/schemas/triage";
 import Button from "./Button";
+import LoadingBubble from "./LoadingBubble";
 
 type TriageChatProps = {
   title?: string;
@@ -152,6 +153,11 @@ export default function TriageChat({
               </span>
             </li>
           ))}
+          {isLoading && (
+            <li className="text-left">
+              <LoadingBubble />
+            </li>
+          )}
         </ul>
       )}
 
@@ -174,7 +180,7 @@ export default function TriageChat({
             {error}
           </p>
           <Button type="submit" disabled={!canSend}>
-            {isLoading ? "Thinking…" : "Send"}
+            Send
           </Button>
         </div>
       </form>
