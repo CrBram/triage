@@ -2,9 +2,14 @@
 
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import type { TriageMessage } from "@/mastra/triage";
-import type { TriageResult, TriageTurn, Urgency } from "@/mastra/schemas/triage";
+import type {
+  TriageResult,
+  TriageTurn,
+  Urgency,
+} from "@/mastra/schemas/triage";
 import Button from "./Button";
 import LoadingBubble from "./LoadingBubble";
+import NextStepActions from "./NextStepActions";
 
 type TriageChatProps = {
   title?: string;
@@ -54,9 +59,7 @@ export default function TriageChat({
       const data = (await res.json()) as TriageTurn | { error: string };
 
       if (!res.ok || "error" in data) {
-        throw new Error(
-          "error" in data ? data.error : "Something went wrong.",
-        );
+        throw new Error("error" in data ? data.error : "Something went wrong.");
       }
 
       if (data.type === "question") {
@@ -118,6 +121,8 @@ export default function TriageChat({
             </ul>
           )}
 
+          <NextStepActions result={result} />
+
           <details className="text-xs text-black/50">
             <summary className="cursor-pointer">Raw output</summary>
             <pre className="mt-2 overflow-x-auto rounded-lg bg-black/5 p-3 text-black/70">
@@ -135,7 +140,7 @@ export default function TriageChat({
 
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-10">
-      <h1 className="text-center">{title}</h1>
+      <h1 className="text-center mb-5">{title}</h1>
 
       {messages.length > 0 && (
         <ul className="flex w-full flex-col gap-3 text-base font-semibold leading-relaxed">
