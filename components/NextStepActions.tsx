@@ -1,19 +1,16 @@
-import type { TriageResult } from "@/mastra/schemas/triage";
 import { careHref } from "@/lib/triage-payload";
+import type { TriageResult } from "@/mastra/schemas/triage";
 
 type NextStepActionsProps = {
   result: TriageResult;
+  id: string;
 };
 
 const buttonClass =
   "inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
-/**
- * One primary action derived from the triage outcome.
- * Always hands the full triage result off to /care as a mock hospital payload.
- */
-export default function NextStepActions({ result }: NextStepActionsProps) {
-  const href = careHref(result);
+export default function NextStepActions({ result, id }: NextStepActionsProps) {
+  const href = careHref({ id, ...result });
 
   if (result.next === "emergency") {
     return (

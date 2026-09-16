@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runTriageTurn } from "@/mastra/triage";
+import { saveSession } from "@/lib/sessions";
 
 const requestSchema = z.object({
   messages: z
@@ -31,6 +32,12 @@ export async function POST(req: Request) {
 
   try {
     const turn = await runTriageTurn(parsed.data.messages);
+
+    if (turn.type === "result") {
+      const id = await saveSession(turn.result);
+      return NextResponse.json({ ...turn, id });
+    }
+
     return NextResponse.json(turn);
   } catch (error) {
     console.error("[api/triage] triage turn failed", error);
@@ -46,13 +53,14 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { error: "We couldn't process your message right now. Please try again." },
+      {
+        error: "We couldn't process your message right now. Please try again.",
+      },
       { status: 502 },
     );
   }
 }
 
-/** True for provider rate limits (429) and capacity errors (503). */
 function isUpstreamOverloaded(error: unknown): boolean {
   if (typeof error !== "object" || error === null) return false;
   const status = (error as { statusCode?: unknown }).statusCode;

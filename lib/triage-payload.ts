@@ -1,4 +1,4 @@
-import { triageResultSchema, type TriageResult } from "@/mastra/schemas/triage";
+type Payload = Record<string, unknown>;
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -22,19 +22,18 @@ function fromBase64Url(payload: string): Uint8Array {
   return new Uint8Array(Buffer.from(padded, "base64"));
 }
 
-export function encodeTriagePayload(result: TriageResult): string {
-  return toBase64Url(new TextEncoder().encode(JSON.stringify(result)));
+export function encodeTriagePayload(data: Payload): string {
+  return toBase64Url(new TextEncoder().encode(JSON.stringify(data)));
 }
 
-export function decodeTriagePayload(payload: string): TriageResult | null {
+export function decodeTriagePayload(payload: string): Payload | null {
   try {
-    const json = new TextDecoder().decode(fromBase64Url(payload));
-    return triageResultSchema.parse(JSON.parse(json));
+    return JSON.parse(new TextDecoder().decode(fromBase64Url(payload))) as Payload;
   } catch {
     return null;
   }
 }
 
-export function careHref(result: TriageResult): string {
-  return `/care?payload=${encodeTriagePayload(result)}`;
+export function careHref(data: Payload): string {
+  return `/care?payload=${encodeTriagePayload(data)}`;
 }

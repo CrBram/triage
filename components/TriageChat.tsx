@@ -14,6 +14,7 @@ import NextStepActions from "./NextStepActions";
 type TriageChatProps = {
   title?: string;
   placeholder?: string;
+  onSessionId?: (id: string | null) => void;
 };
 
 const urgencyStyles: Record<Urgency, string> = {
@@ -25,10 +26,12 @@ const urgencyStyles: Record<Urgency, string> = {
 export default function TriageChat({
   title = "How are you feeling today?",
   placeholder = "Describe your current symptoms as accurately as possible.",
+  onSessionId,
 }: TriageChatProps) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<TriageMessage[]>([]);
   const [result, setResult] = useState<TriageResult | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +59,9 @@ export default function TriageChat({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),
       });
-      const data = (await res.json()) as TriageTurn | { error: string };
+      const data = (await res.json()) as
+        | (TriageTurn & { id?: string })
+        | { error: string };
 
       if (!res.ok || "error" in data) {
         throw new Error("error" in data ? data.error : "Something went wrong.");
@@ -69,6 +74,10 @@ export default function TriageChat({
         ]);
       } else {
         setResult(data.result);
+        if (data.id) {
+          setSessionId(data.id);
+          onSessionId?.(data.id);
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -88,6 +97,8 @@ export default function TriageChat({
     setMessage("");
     setMessages([]);
     setResult(null);
+    setSessionId(null);
+    onSessionId?.(null);
     setError(null);
   }
 
@@ -121,12 +132,12 @@ export default function TriageChat({
             </ul>
           )}
 
-          <NextStepActions result={result} />
+          <NextStepActions result={result} id={sessionId ?? "unknown"} />
 
           <details className="text-xs text-black/50">
             <summary className="cursor-pointer">Raw output</summary>
             <pre className="mt-2 overflow-x-auto rounded-lg bg-black/5 p-3 text-black/70">
-              {JSON.stringify(result, null, 2)}
+              {JSON.stringify({ id: sessionId, ...result }, null, 2)}
             </pre>
           </details>
         </div>
