@@ -40,8 +40,8 @@ const panton = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Triage",
-  description: "Triage",
+  title: "nimblecare",
+  description: "Digital triage",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
