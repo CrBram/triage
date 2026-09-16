@@ -11,14 +11,9 @@ const DEFAULT_PHRASES = [
 
 type LoadingBubbleProps = {
   phrases?: string[];
-  /** Milliseconds each phrase stays on screen. */
   interval?: number;
 };
 
-/**
- * Assistant-style chat bubble shown while waiting for the triage agent.
- * Cycles through short phrases and sweeps a soft glare across the bubble.
- */
 export default function LoadingBubble({
   phrases = DEFAULT_PHRASES,
   interval = 2200,
@@ -49,7 +44,7 @@ export default function LoadingBubble({
     <span
       role="status"
       aria-live="polite"
-      className="relative inline-block max-w-[85%] overflow-hidden rounded-lg bg-black/5 px-3 py-2 text-black/50"
+      className="relative inline-block max-w-[85%] overflow-hidden rounded-lg bg-black/5 px-4 py-2.5 text-black/50"
     >
       <span
         aria-hidden

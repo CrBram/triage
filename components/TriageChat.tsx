@@ -138,15 +138,17 @@ export default function TriageChat({
       <h1 className="text-center">{title}</h1>
 
       {messages.length > 0 && (
-        <ul className="flex w-full flex-col gap-2 text-sm text-black/60">
+        <ul className="flex w-full flex-col gap-3 text-base font-semibold leading-relaxed">
           {messages.map((m, i) => (
             <li
               key={i}
               className={m.role === "user" ? "text-right" : "text-left"}
             >
               <span
-                className={`inline-block max-w-[85%] rounded-lg px-3 py-2 ${
-                  m.role === "user" ? "bg-accent/25 text-black" : "bg-black/5"
+                className={`inline-block max-w-[85%] rounded-lg px-4 py-2.5 text-left ${
+                  m.role === "user"
+                    ? "bg-accent/25 text-black"
+                    : "bg-black/5 text-black/80"
                 }`}
               >
                 {m.content}
