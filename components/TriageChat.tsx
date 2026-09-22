@@ -185,7 +185,7 @@ export default function TriageChat({
           hasMessages ? "h-full overflow-hidden" : ""
         }`}
       >
-        <h1 className="mb-4 shrink-0 text-center">{title}</h1>
+        <h1 className="mb-6 shrink-0 text-center">{title}</h1>
 
         <div
           className={`grid w-full min-h-0 transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
