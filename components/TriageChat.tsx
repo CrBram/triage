@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import type { TriageMessage } from "@/mastra/triage";
 import type {
   TriageResult,
@@ -34,8 +40,16 @@ export default function TriageChat({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const canSend = message.trim().length > 0 && !isLoading;
+
+  useEffect(() => {
+    if (isLoading || result) return;
+    console.log("focusing");
+    const id = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(id);
+  }, [isLoading, result]);
   const lastQuestion = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.content;
@@ -184,6 +198,7 @@ export default function TriageChat({
         className="flex w-full flex-col gap-3 rounded-card bg-white p-5 shadow-card"
       >
         <textarea
+          ref={inputRef}
           name="message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
