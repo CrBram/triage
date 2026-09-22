@@ -52,7 +52,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
 
         {next === "emergency" && (
           <a
-            href="tel:112"
+            href="tel:1122"
             className={`${buttonClass} bg-error text-white hover:bg-error/90`}
           >
             Call emergency services (112)
