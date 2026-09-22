@@ -156,13 +156,6 @@ export default function TriageChat({
           )}
 
           <NextStepActions result={result} id={sessionId ?? "unknown"} />
-
-          <details className="text-xs text-black/50">
-            <summary className="cursor-pointer">Raw output</summary>
-            <pre className="mt-2 overflow-x-auto rounded-lg bg-black/5 p-3 text-black/70">
-              {JSON.stringify({ id: sessionId, ...result }, null, 2)}
-            </pre>
-          </details>
         </div>
 
         <Button variant="secondary" onClick={reset}>
