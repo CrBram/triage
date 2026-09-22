@@ -52,9 +52,13 @@ export default function TriageChat({
   }, [isLoading, result]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }, [messages, isLoading]);
 
+  const hasMessages = messages.length > 0;
   const lastQuestion = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.content;
@@ -170,74 +174,101 @@ export default function TriageChat({
 
   return (
     <div
-      className={`flex h-full w-full max-w-2xl min-h-0 flex-col items-center gap-4 overflow-hidden ${
-        messages.length === 0 ? "justify-center" : ""
+      className={`grid h-full w-full max-w-2xl min-h-0 transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+        hasMessages ? "grid-rows-[0fr_1fr_0fr]" : "grid-rows-[1fr_auto_1fr]"
       }`}
     >
-      <h1 className="shrink-0 text-center">{title}</h1>
+      <div className="min-h-0 overflow-hidden" aria-hidden />
 
-      {messages.length > 0 && (
-        <div className="w-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <ul className="flex w-full flex-col gap-3 text-base font-semibold leading-relaxed">
-            {messages.map((m, i) => (
-              <li
-                key={i}
-                className={m.role === "user" ? "text-right" : "text-left"}
-              >
-                <span
-                  className={`inline-block max-w-[85%] rounded-lg px-4 py-2.5 text-left ${
-                    m.role === "user"
-                      ? "bg-accent/25 text-black"
-                      : "bg-black/5 text-black/80"
-                  }`}
-                >
-                  {m.content}
-                </span>
-              </li>
-            ))}
-            {isLoading && (
-              <li className="text-left">
-                <LoadingBubble />
-              </li>
-            )}
-            <li ref={messagesEndRef} aria-hidden className="h-0 list-none" />
-          </ul>
-        </div>
-      )}
-
-      <form
-        onSubmit={handleSubmit}
-        className="flex w-full shrink-0 flex-col gap-3 rounded-card bg-white p-5 shadow-card"
+      <div
+        className={`flex min-h-0 w-full flex-col items-center ${
+          hasMessages ? "h-full overflow-hidden" : ""
+        }`}
       >
-        <textarea
-          ref={inputRef}
-          name="message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={lastQuestion ? "Type your answer…" : placeholder}
-          rows={4}
-          disabled={isLoading}
-          className="w-full resize-none bg-transparent text-lg text-black/70 outline-none placeholder:text-black/70 disabled:opacity-60"
-        />
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-error" role="alert">
-            {error}
-          </p>
-          <Button type="submit" disabled={!canSend} className="gap-2">
-            Send
-            <svg aria-hidden viewBox="0 0 16 16" fill="none" className="size-4">
-              <path
-                d="M6 3.5 10.5 8 6 12.5"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Button>
+        <h1 className="mb-4 shrink-0 text-center">{title}</h1>
+
+        <div
+          className={`grid w-full min-h-0 transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+            hasMessages
+              ? "mb-4 flex-1 grid-rows-[1fr] opacity-100"
+              : "grid-rows-[0fr] opacity-0"
+          }`}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="h-full overflow-y-auto overscroll-contain">
+              <ul className="flex w-full flex-col gap-3 text-base font-semibold leading-relaxed">
+                {messages.map((m, i) => (
+                  <li
+                    key={i}
+                    className={m.role === "user" ? "text-right" : "text-left"}
+                  >
+                    <span
+                      className={`inline-block max-w-[85%] rounded-lg px-4 py-2.5 text-left ${
+                        m.role === "user"
+                          ? "bg-accent/25 text-black"
+                          : "bg-black/5 text-black/80"
+                      }`}
+                    >
+                      {m.content}
+                    </span>
+                  </li>
+                ))}
+                {isLoading && (
+                  <li className="text-left">
+                    <LoadingBubble />
+                  </li>
+                )}
+                <li
+                  ref={messagesEndRef}
+                  aria-hidden
+                  className="h-0 list-none"
+                />
+              </ul>
+            </div>
+          </div>
         </div>
-      </form>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex w-full shrink-0 flex-col gap-3 rounded-card bg-white p-5 shadow-card"
+        >
+          <textarea
+            ref={inputRef}
+            name="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={lastQuestion ? "Type your answer…" : placeholder}
+            rows={4}
+            disabled={isLoading}
+            className="w-full resize-none bg-transparent text-lg text-black/70 outline-none placeholder:text-black/70 disabled:opacity-60"
+          />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-error" role="alert">
+              {error}
+            </p>
+            <Button type="submit" disabled={!canSend} className="gap-2">
+              Send
+              <svg
+                aria-hidden
+                viewBox="0 0 16 16"
+                fill="none"
+                className="size-4"
+              >
+                <path
+                  d="M6 3.5 10.5 8 6 12.5"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      <div className="min-h-0 overflow-hidden" aria-hidden />
     </div>
   );
 }
