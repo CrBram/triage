@@ -41,15 +41,20 @@ export default function TriageChat({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLLIElement>(null);
 
   const canSend = message.trim().length > 0 && !isLoading;
 
   useEffect(() => {
     if (isLoading || result) return;
-    console.log("focusing");
     const id = window.setTimeout(() => inputRef.current?.focus(), 0);
     return () => window.clearTimeout(id);
   }, [isLoading, result]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, isLoading]);
+
   const lastQuestion = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.content;
@@ -118,7 +123,7 @@ export default function TriageChat({
 
   if (result) {
     return (
-      <div className="flex w-full max-w-2xl flex-col items-center gap-10">
+      <div className="flex w-full max-w-2xl flex-col items-center gap-10 overflow-y-auto py-4">
         <h1>Your assessment</h1>
 
         <div className="flex w-full flex-col gap-5 rounded-card bg-white p-6 shadow-card">
@@ -164,38 +169,45 @@ export default function TriageChat({
   }
 
   return (
-    <div className="flex w-full max-w-2xl flex-col items-center gap-10">
-      <h1 className="text-center mb-5">{title}</h1>
+    <div
+      className={`flex h-full w-full max-w-2xl min-h-0 flex-col items-center gap-4 overflow-hidden ${
+        messages.length === 0 ? "justify-center" : ""
+      }`}
+    >
+      <h1 className="shrink-0 text-center">{title}</h1>
 
       {messages.length > 0 && (
-        <ul className="flex w-full flex-col gap-3 text-base font-semibold leading-relaxed">
-          {messages.map((m, i) => (
-            <li
-              key={i}
-              className={m.role === "user" ? "text-right" : "text-left"}
-            >
-              <span
-                className={`inline-block max-w-[85%] rounded-lg px-4 py-2.5 text-left ${
-                  m.role === "user"
-                    ? "bg-accent/25 text-black"
-                    : "bg-black/5 text-black/80"
-                }`}
+        <div className="w-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <ul className="flex w-full flex-col gap-3 text-base font-semibold leading-relaxed">
+            {messages.map((m, i) => (
+              <li
+                key={i}
+                className={m.role === "user" ? "text-right" : "text-left"}
               >
-                {m.content}
-              </span>
-            </li>
-          ))}
-          {isLoading && (
-            <li className="text-left">
-              <LoadingBubble />
-            </li>
-          )}
-        </ul>
+                <span
+                  className={`inline-block max-w-[85%] rounded-lg px-4 py-2.5 text-left ${
+                    m.role === "user"
+                      ? "bg-accent/25 text-black"
+                      : "bg-black/5 text-black/80"
+                  }`}
+                >
+                  {m.content}
+                </span>
+              </li>
+            ))}
+            {isLoading && (
+              <li className="text-left">
+                <LoadingBubble />
+              </li>
+            )}
+            <li ref={messagesEndRef} aria-hidden className="h-0 list-none" />
+          </ul>
+        </div>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className="flex w-full flex-col gap-3 rounded-card bg-white p-5 shadow-card"
+        className="flex w-full shrink-0 flex-col gap-3 rounded-card bg-white p-5 shadow-card"
       >
         <textarea
           ref={inputRef}

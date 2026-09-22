@@ -7,13 +7,13 @@ type ContentProps = {
 
 export default function Content({ title, children }: ContentProps) {
   return (
-    <section className="flex min-w-0 flex-1 flex-col">
+    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       {title && (
-        <header className="flex justify-center pt-4 pb-6 text-xs text-black/70">
+        <header className="flex shrink-0 justify-center pt-14 pb-4 text-xs text-black/70 sm:pt-4">
           {title}
         </header>
       )}
-      <div className="flex flex-1 flex-col items-center justify-center px-8 pb-24">
+      <div className="flex min-h-0 flex-1 flex-col items-center overflow-hidden px-4 pb-4 sm:px-8">
         {children}
       </div>
     </section>

@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${panton.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex h-dvh flex-col overflow-hidden">{children}</body>
     </html>
   );
 }
