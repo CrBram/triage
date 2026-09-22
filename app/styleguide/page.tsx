@@ -1,5 +1,5 @@
 const colors = [
-  { name: "background", hex: "#FAFBF8", className: "bg-background" },
+  { name: "background", hex: "#CEDCD1", className: "bg-background" },
   { name: "black", hex: "#181818", className: "bg-black" },
   { name: "accent", hex: "#98CDFF", className: "bg-accent" },
   { name: "success", hex: "#26AE60", className: "bg-success" },

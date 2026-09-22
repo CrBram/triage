@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata } from "next/types";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -44,7 +44,11 @@ export const metadata: Metadata = {
   description: "Digital triage",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={`${panton.variable} h-full antialiased`}>
       <body className="flex h-dvh flex-col overflow-hidden">{children}</body>
