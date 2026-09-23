@@ -14,6 +14,7 @@ import type {
   Urgency,
 } from "@/mastra/schemas/triage";
 import Button from "./Button";
+import FollowUpAdviceChat from "./FollowUpAdviceChat";
 import LoadingBubble from "./LoadingBubble";
 import NextStepActions from "./NextStepActions";
 
@@ -127,41 +128,54 @@ export default function TriageChat({
 
   if (result) {
     return (
-      <div className="flex w-full max-w-2xl flex-col items-center gap-10 overflow-y-auto py-4">
-        <h1>Your assessment</h1>
+      <>
+        <div className="flex w-full max-w-2xl flex-col items-center gap-10 overflow-y-auto py-4">
+          <h1>Your assessment</h1>
 
-        <div className="flex w-full flex-col gap-5 rounded-card bg-white p-6 shadow-card">
-          <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-            <span
-              className={`rounded-md px-2.5 py-1 capitalize ${urgencyStyles[result.urgency]}`}
-            >
-              {result.urgency}
-            </span>
-            <span className="rounded-md bg-accent/25 px-2.5 py-1">
-              {result.pathway}
-            </span>
-            <span className="rounded-md bg-black/5 px-2.5 py-1">
-              {result.consultationType}
-            </span>
+          <div className="flex w-full flex-col gap-5 rounded-card bg-white p-6 shadow-card">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+              <span
+                className={`rounded-md px-2.5 py-1 capitalize ${urgencyStyles[result.urgency]}`}
+              >
+                {result.urgency}
+              </span>
+              <span className="rounded-md bg-accent/25 px-2.5 py-1">
+                {result.pathway}
+              </span>
+              <span className="rounded-md bg-black/5 px-2.5 py-1">
+                {result.consultationType}
+              </span>
+            </div>
+
+            <p className="text-lg leading-relaxed">{result.patientMessage}</p>
+
+            {result.redFlags.length > 0 && (
+              <ul className="flex flex-col gap-1 text-sm text-black/70">
+                {result.redFlags.map((flag) => (
+                  <li key={flag}>• {flag}</li>
+                ))}
+              </ul>
+            )}
+
+            <NextStepActions result={result} id={sessionId ?? "unknown"} />
           </div>
 
-          <p className="text-lg leading-relaxed">{result.patientMessage}</p>
-
-          {result.redFlags.length > 0 && (
-            <ul className="flex flex-col gap-1 text-sm text-black/70">
-              {result.redFlags.map((flag) => (
-                <li key={flag}>• {flag}</li>
-              ))}
-            </ul>
-          )}
-
-          <NextStepActions result={result} id={sessionId ?? "unknown"} />
+          <Button variant="secondary" onClick={reset}>
+            Start a new assessment
+          </Button>
         </div>
 
-        <Button variant="secondary" onClick={reset}>
-          Start a new assessment
-        </Button>
-      </div>
+        <FollowUpAdviceChat
+          assessment={{
+            urgency: result.urgency,
+            pathway: result.pathway,
+            next: result.next,
+            summary: result.summary,
+            patientMessage: result.patientMessage,
+            redFlags: result.redFlags,
+          }}
+        />
+      </>
     );
   }
 

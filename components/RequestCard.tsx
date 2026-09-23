@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Urgency } from "@/mastra/schemas/triage";
 import type { TriageSession } from "@/lib/sessions";
 import ChatHistoryModal from "@/components/ChatHistoryModal";
+import PayloadModal from "@/components/PayloadModal";
 
 const urgencyStyles: Record<Urgency, string> = {
   emergency: "bg-error/15 text-error",
@@ -17,8 +18,14 @@ type RequestCardProps = {
 
 export default function RequestCard({ session }: RequestCardProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [payloadOpen, setPayloadOpen] = useState(false);
   const confidencePct = Math.round(session.confidence * 100);
   const created = new Date(session.createdAt);
+
+  const payload = useMemo(() => {
+    const { messages: _messages, ...rest } = session;
+    return rest;
+  }, [session]);
 
   return (
     <>
@@ -82,13 +89,22 @@ export default function RequestCard({ session }: RequestCardProps) {
             />
           </div>
 
-          <button
-            type="button"
-            onClick={() => setHistoryOpen(true)}
-            className="self-start text-xs font-semibold text-black/55 transition-colors hover:text-black"
-          >
-            View chat history
-          </button>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              className="text-xs font-semibold text-black/55 transition-colors hover:text-black"
+            >
+              View chat history
+            </button>
+            <button
+              type="button"
+              onClick={() => setPayloadOpen(true)}
+              className="text-xs font-semibold text-black/55 transition-colors hover:text-black"
+            >
+              View full payload
+            </button>
+          </div>
         </div>
       </article>
 
@@ -98,6 +114,13 @@ export default function RequestCard({ session }: RequestCardProps) {
         messages={session.messages}
         patientMessage={session.patientMessage}
         onClose={() => setHistoryOpen(false)}
+      />
+
+      <PayloadModal
+        open={payloadOpen}
+        sessionId={session.id}
+        payload={payload}
+        onClose={() => setPayloadOpen(false)}
       />
     </>
   );

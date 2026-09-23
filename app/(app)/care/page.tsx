@@ -2,6 +2,7 @@ import Link from "next/link";
 import Content from "@/components/Content";
 import Button from "@/components/Button";
 import { decodeTriagePayload } from "@/lib/triage-payload";
+import { getInstance } from "@/lib/instances";
 
 type CarePageProps = {
   searchParams: Promise<{ payload?: string }>;
@@ -29,7 +30,10 @@ export default async function CarePage({ searchParams }: CarePageProps) {
 
   const next = String(data.next ?? "");
   const pathway = String(data.pathway ?? "");
-  const consultationType = String(data.consultationType ?? "");
+  const instanceId = String(data.instanceId ?? "");
+  const instance = instanceId ? await getInstance(instanceId) : null;
+  const instanceName =
+    instance?.name ?? (instanceId || "your care provider");
 
   const title =
     next === "emergency"
@@ -38,35 +42,28 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         ? "Appointment request"
         : "Self-care guidance";
 
+  const sentLine = `Information has been sent to ${instanceName}.`;
+
   return (
     <Content title="nimblecare · next step">
       <div className="flex w-full max-w-xl flex-col gap-6 rounded-card bg-white p-6 shadow-card">
         <h1 className="text-3xl">{title}</h1>
         <p className="text-lg text-black/70">
           {next === "emergency"
-            ? "Call emergency services now. This payload would be sent to dispatch / the ED."
+            ? `Call emergency services now. ${sentLine}`
             : next === "schedule"
-              ? `This payload would be sent to scheduling for ${pathway} (${consultationType}).`
-              : `Self-care guidance for ${pathway}. Seek urgent care if symptoms worsen.`}
+              ? `${sentLine} They will follow up about your ${pathway} appointment.`
+              : `${sentLine} Follow the self-care guidance for ${pathway}, and seek urgent care if symptoms worsen.`}
         </p>
 
         {next === "emergency" && (
           <a
-            href="tel:1122"
+            href="tel:112"
             className={`${buttonClass} bg-error text-white hover:bg-error/90`}
           >
             Call emergency services (112)
           </a>
         )}
-
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold text-black/60">
-            Saved triage payload
-          </p>
-          <pre className="overflow-x-auto rounded-lg bg-black/5 p-4 text-xs leading-relaxed text-black/70">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        </div>
 
         <Link href="/">
           <Button variant="secondary">Back to triage</Button>

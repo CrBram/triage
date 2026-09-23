@@ -1,6 +1,7 @@
 import { Mastra } from "@mastra/core/mastra";
 import { LibSQLStore } from "@mastra/libsql";
 import { PinoLogger } from "@mastra/loggers";
+import { adviceAgent } from "./agents/advice-agent";
 import { triageAgent } from "./agents/triage-agent";
 
 /**
@@ -17,7 +18,7 @@ const storage = new LibSQLStore({
 });
 
 export const mastra = new Mastra({
-  agents: { triageAgent },
+  agents: { triageAgent, adviceAgent },
   storage,
   logger: new PinoLogger({
     name: "Triage",
