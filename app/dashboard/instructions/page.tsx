@@ -2,22 +2,60 @@
 
 import { useState } from "react";
 import Button from "@/components/Button";
+import InstructionAccordionItem from "@/components/InstructionAccordionItem";
 import {
+  DEFAULT_CONSULTATION_INSTRUCTIONS,
   DEFAULT_PATHWAY_INSTRUCTIONS,
-  type PathwayInstruction,
+  type InstructionItem,
 } from "@/lib/pathways";
 
 export default function InstructionsPage() {
-  const [pathways, setPathways] = useState<PathwayInstruction[]>(
+  const [pathways, setPathways] = useState<InstructionItem[]>(
     DEFAULT_PATHWAY_INSTRUCTIONS,
+  );
+  const [consultations, setConsultations] = useState<InstructionItem[]>(
+    DEFAULT_CONSULTATION_INSTRUCTIONS,
+  );
+  const [openPathwayId, setOpenPathwayId] = useState<string | null>(null);
+  const [openConsultationId, setOpenConsultationId] = useState<string | null>(
+    null,
   );
   const [saved, setSaved] = useState(false);
 
-  function updateDescription(index: number, description: string) {
+  function markDirty() {
     setSaved(false);
-    setPathways((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, description } : item)),
+  }
+
+  function updateItem(
+    setter: React.Dispatch<React.SetStateAction<InstructionItem[]>>,
+    id: string,
+    patch: Partial<Pick<InstructionItem, "name" | "description">>,
+  ) {
+    markDirty();
+    setter((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
     );
+  }
+
+  function deleteItem(
+    setter: React.Dispatch<React.SetStateAction<InstructionItem[]>>,
+    id: string,
+    openId: string | null,
+    setOpenId: (id: string | null) => void,
+  ) {
+    markDirty();
+    setter((prev) => prev.filter((item) => item.id !== id));
+    if (openId === id) setOpenId(null);
+  }
+
+  function addItem(
+    setter: React.Dispatch<React.SetStateAction<InstructionItem[]>>,
+    setOpenId: (id: string | null) => void,
+  ) {
+    markDirty();
+    const id = `new-${crypto.randomUUID().slice(0, 8)}`;
+    setter((prev) => [...prev, { id, name: "", description: "" }]);
+    setOpenId(id);
   }
 
   function handleSave() {
@@ -26,14 +64,14 @@ export default function InstructionsPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="mb-4 flex shrink-0 items-end justify-between gap-4">
+    <div className="pb-8">
+      <header className="mb-8 flex items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Instructions
           </h1>
           <p className="mt-1 text-sm text-black/60">
-            Describe each care pathway so the triage AI knows when to use it.
+            Configure pathways and consultation types for the triage AI.
           </p>
         </div>
         <Button type="button" onClick={handleSave}>
@@ -41,27 +79,97 @@ export default function InstructionsPage() {
         </Button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <ul className="flex flex-col gap-4">
-          {pathways.map((item, index) => (
-            <li
-              key={item.pathway}
-              className="rounded-card bg-white p-5 shadow-card"
-            >
-              <label className="flex flex-col gap-2">
-                <span className="text-base font-semibold">{item.pathway}</span>
-                <textarea
-                  value={item.description}
-                  onChange={(e) => updateDescription(index, e.target.value)}
-                  rows={3}
-                  className="w-full resize-y rounded-lg border border-black/10 bg-background/40 px-3 py-2.5 text-sm leading-relaxed text-black outline-none transition-colors placeholder:text-black/35 focus:border-accent focus:bg-white"
-                  placeholder={`When should patients be routed to ${item.pathway}?`}
-                />
-              </label>
-            </li>
+      <section className="mb-10">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-black/50">
+            Pathways
+          </h2>
+          <button
+            type="button"
+            onClick={() => addItem(setPathways, setOpenPathwayId)}
+            className="text-xs font-semibold text-black/60 transition-colors hover:text-black"
+          >
+            + Add pathway
+          </button>
+        </div>
+        <ul className="flex flex-col gap-2">
+          {pathways.map((item) => (
+            <InstructionAccordionItem
+              key={item.id}
+              item={item}
+              open={openPathwayId === item.id}
+              namePlaceholder="Pathway name"
+              descriptionPlaceholder="When should patients be routed to this pathway?"
+              onToggle={() =>
+                setOpenPathwayId((current) =>
+                  current === item.id ? null : item.id,
+                )
+              }
+              onChange={(patch) => updateItem(setPathways, item.id, patch)}
+              onDelete={() =>
+                deleteItem(
+                  setPathways,
+                  item.id,
+                  openPathwayId,
+                  setOpenPathwayId,
+                )
+              }
+            />
           ))}
+          {pathways.length === 0 && (
+            <li className="rounded-card border border-dashed border-black/15 bg-white/40 px-4 py-8 text-center text-sm text-black/50">
+              No pathways yet.
+            </li>
+          )}
         </ul>
-      </div>
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-black/50">
+            Consultation types
+          </h2>
+          <button
+            type="button"
+            onClick={() => addItem(setConsultations, setOpenConsultationId)}
+            className="text-xs font-semibold text-black/60 transition-colors hover:text-black"
+          >
+            + Add type
+          </button>
+        </div>
+        <ul className="flex flex-col gap-2">
+          {consultations.map((item) => (
+            <InstructionAccordionItem
+              key={item.id}
+              item={item}
+              open={openConsultationId === item.id}
+              namePlaceholder="Consultation type"
+              descriptionPlaceholder="When should this consultation type be used?"
+              onToggle={() =>
+                setOpenConsultationId((current) =>
+                  current === item.id ? null : item.id,
+                )
+              }
+              onChange={(patch) =>
+                updateItem(setConsultations, item.id, patch)
+              }
+              onDelete={() =>
+                deleteItem(
+                  setConsultations,
+                  item.id,
+                  openConsultationId,
+                  setOpenConsultationId,
+                )
+              }
+            />
+          ))}
+          {consultations.length === 0 && (
+            <li className="rounded-card border border-dashed border-black/15 bg-white/40 px-4 py-8 text-center text-sm text-black/50">
+              No consultation types yet.
+            </li>
+          )}
+        </ul>
+      </section>
     </div>
   );
 }
