@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Urgency } from "@/mastra/schemas/triage";
 import type { TriageSession } from "@/lib/sessions";
 import ChatHistoryModal from "@/components/ChatHistoryModal";
@@ -14,40 +14,83 @@ const urgencyStyles: Record<Urgency, string> = {
 
 type RequestCardProps = {
   session: TriageSession;
+  onUpdated?: (session: TriageSession) => void;
 };
 
-export default function RequestCard({ session }: RequestCardProps) {
+function telHref(phone: string) {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
+export default function RequestCard({ session, onUpdated }: RequestCardProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [payloadOpen, setPayloadOpen] = useState(false);
-  const confidencePct = Math.round(session.confidence * 100);
-  const created = new Date(session.createdAt);
+  const [resolving, setResolving] = useState(false);
+  const [localSession, setLocalSession] = useState(session);
+
+  useEffect(() => {
+    setLocalSession(session);
+  }, [session]);
+
+  const confidencePct = Math.round(localSession.confidence * 100);
+  const created = new Date(localSession.createdAt);
 
   const payload = useMemo(() => {
-    const { messages: _messages, ...rest } = session;
+    const { messages: _messages, ...rest } = localSession;
     return rest;
-  }, [session]);
+  }, [localSession]);
+
+  async function markResolved() {
+    if (localSession.resolved || resolving) return;
+    setResolving(true);
+    try {
+      const res = await fetch(`/api/triage/${localSession.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resolved: true }),
+      });
+      if (!res.ok) throw new Error("Failed to resolve");
+      const updated = (await res.json()) as TriageSession;
+      setLocalSession(updated);
+      onUpdated?.(updated);
+    } catch {
+      // Keep card usable even if resolve fails.
+    } finally {
+      setResolving(false);
+    }
+  }
 
   return (
     <>
-      <article className="flex h-full flex-col gap-3 rounded-card bg-white p-5 shadow-card">
+      <article
+        className={`flex h-full flex-col gap-3 rounded-card bg-white p-5 shadow-card ${
+          localSession.resolved ? "opacity-80" : ""
+        }`}
+      >
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-xs font-semibold text-black/50">
-              {session.id}
+              {localSession.id}
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight">
-              {session.pathway}
+              {localSession.pathway}
             </h2>
           </div>
-          <span
-            className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${urgencyStyles[session.urgency]}`}
-          >
-            {session.urgency}
-          </span>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span
+              className={`rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${urgencyStyles[localSession.urgency]}`}
+            >
+              {localSession.urgency}
+            </span>
+            {localSession.resolved && (
+              <span className="rounded-md bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
+                Resolved
+              </span>
+            )}
+          </div>
         </header>
 
         <p className="line-clamp-3 text-sm leading-relaxed text-black/70">
-          {session.summary}
+          {localSession.summary}
         </p>
 
         <div className="mt-auto flex flex-col gap-3">
@@ -55,13 +98,19 @@ export default function RequestCard({ session }: RequestCardProps) {
             <div>
               <dt className="font-semibold text-black/45">Next step</dt>
               <dd className="mt-0.5 font-semibold capitalize text-black">
-                {session.next}
+                {localSession.next}
               </dd>
             </div>
             <div>
               <dt className="font-semibold text-black/45">Confidence</dt>
               <dd className="mt-0.5 font-semibold text-black">
                 {confidencePct}%
+              </dd>
+            </div>
+            <div className="col-span-2">
+              <dt className="font-semibold text-black/45">Phone</dt>
+              <dd className="mt-0.5 font-semibold text-black">
+                {localSession.phoneNumber ?? "Not provided"}
               </dd>
             </div>
             <div className="col-span-2">
@@ -89,6 +138,16 @@ export default function RequestCard({ session }: RequestCardProps) {
             />
           </div>
 
+          {localSession.phoneNumber && (
+            <a
+              href={telHref(localSession.phoneNumber)}
+              onClick={() => void markResolved()}
+              className="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-black transition-colors hover:bg-accent/80"
+            >
+              {resolving ? "Contacting…" : "Contact"}
+            </a>
+          )}
+
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <button
               type="button"
@@ -110,15 +169,15 @@ export default function RequestCard({ session }: RequestCardProps) {
 
       <ChatHistoryModal
         open={historyOpen}
-        sessionId={session.id}
-        messages={session.messages}
-        patientMessage={session.patientMessage}
+        sessionId={localSession.id}
+        messages={localSession.messages}
+        patientMessage={localSession.patientMessage}
         onClose={() => setHistoryOpen(false)}
       />
 
       <PayloadModal
         open={payloadOpen}
-        sessionId={session.id}
+        sessionId={localSession.id}
         payload={payload}
         onClose={() => setPayloadOpen(false)}
       />

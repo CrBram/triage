@@ -9,6 +9,8 @@ export type TriageSession = {
   createdAt: string;
   instanceId: string;
   messages: TriageMessage[];
+  phoneNumber: string | null;
+  resolved: boolean;
 } & TriageResult;
 
 /** Save a finished triage result. Returns the session id. */
@@ -33,6 +35,8 @@ export async function saveSession(
         createdAt,
         instanceId,
         messages,
+        phoneNumber: null,
+        resolved: false,
       }),
     ],
   });
@@ -69,6 +73,30 @@ export async function listSessions(
   return rs.rows.map((row) => parseSession(row as unknown as SessionRow));
 }
 
+export async function updateSession(
+  id: string,
+  patch: { phoneNumber?: string | null; resolved?: boolean },
+): Promise<TriageSession | null> {
+  await ensureSchema();
+  const existing = await getSession(id);
+  if (!existing) return null;
+
+  const next: TriageSession = {
+    ...existing,
+    ...(patch.phoneNumber !== undefined
+      ? { phoneNumber: patch.phoneNumber }
+      : {}),
+    ...(patch.resolved !== undefined ? { resolved: patch.resolved } : {}),
+  };
+
+  await db.execute({
+    sql: `UPDATE triage_sessions SET data = ? WHERE id = ?`,
+    args: [JSON.stringify(next), id],
+  });
+
+  return next;
+}
+
 type SessionRow = {
   instance_id?: unknown;
   data: unknown;
@@ -77,6 +105,8 @@ type SessionRow = {
 function parseSession(row: SessionRow): TriageSession {
   const parsed = JSON.parse(String(row.data)) as TriageSession & {
     messages?: TriageMessage[];
+    phoneNumber?: string | null;
+    resolved?: boolean;
   };
   const instanceId =
     parsed.instanceId ||
@@ -85,5 +115,7 @@ function parseSession(row: SessionRow): TriageSession {
     ...parsed,
     instanceId,
     messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+    phoneNumber: parsed.phoneNumber?.trim() ? parsed.phoneNumber.trim() : null,
+    resolved: Boolean(parsed.resolved),
   };
 }
