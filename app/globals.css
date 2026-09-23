@@ -46,4 +46,13 @@ body {
   h1 {
     @apply text-4xl font-semibold tracking-tight;
   }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
 }

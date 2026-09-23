@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { TriageResult } from "@/mastra/schemas/triage";
+import type { TriageMessage } from "@/mastra/triage";
 import { db, ensureSchema } from "@/lib/db";
 import { DEFAULT_INSTANCE_ID } from "@/lib/instance";
 
@@ -7,10 +8,14 @@ export type TriageSession = {
   id: string;
   createdAt: string;
   instanceId: string;
+  messages: TriageMessage[];
 } & TriageResult;
 
 /** Save a finished triage result. Returns the session id. */
-export async function saveSession(result: TriageResult): Promise<string> {
+export async function saveSession(
+  result: TriageResult,
+  messages: TriageMessage[] = [],
+): Promise<string> {
   await ensureSchema();
   const id = `trg-${randomUUID().slice(0, 8)}`;
   const createdAt = new Date().toISOString();
@@ -22,7 +27,13 @@ export async function saveSession(result: TriageResult): Promise<string> {
       id,
       instanceId,
       createdAt,
-      JSON.stringify({ ...result, id, createdAt, instanceId }),
+      JSON.stringify({
+        ...result,
+        id,
+        createdAt,
+        instanceId,
+        messages,
+      }),
     ],
   });
   return id;
@@ -64,9 +75,15 @@ type SessionRow = {
 };
 
 function parseSession(row: SessionRow): TriageSession {
-  const parsed = JSON.parse(String(row.data)) as TriageSession;
+  const parsed = JSON.parse(String(row.data)) as TriageSession & {
+    messages?: TriageMessage[];
+  };
   const instanceId =
     parsed.instanceId ||
     (row.instance_id ? String(row.instance_id) : DEFAULT_INSTANCE_ID);
-  return { ...parsed, instanceId };
+  return {
+    ...parsed,
+    instanceId,
+    messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+  };
 }

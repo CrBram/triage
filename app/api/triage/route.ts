@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const turn = await runTriageTurn(parsed.data.messages);
 
     if (turn.type === "result") {
-      const id = await saveSession(turn.result);
+      const id = await saveSession(turn.result, parsed.data.messages);
       return NextResponse.json({ ...turn, id });
     }
 
