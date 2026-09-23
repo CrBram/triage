@@ -21,6 +21,7 @@ export function ensureSchema() {
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           general_info TEXT NOT NULL DEFAULT '',
+          is_active INTEGER NOT NULL DEFAULT 1,
           created_at TEXT NOT NULL
         )
       `);
@@ -77,6 +78,11 @@ async function ensureInstanceColumns() {
       `ALTER TABLE instances ADD COLUMN general_info TEXT NOT NULL DEFAULT ''`,
     );
   }
+  if (!names.has("is_active")) {
+    await db.execute(
+      `ALTER TABLE instances ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1`,
+    );
+  }
 }
 
 async function ensureSessionColumns() {
@@ -98,8 +104,8 @@ async function seedInstances() {
 
   for (const instance of SEED_INSTANCES) {
     await db.execute({
-      sql: `INSERT OR IGNORE INTO instances (id, name, general_info, created_at)
-            VALUES (?, ?, ?, ?)`,
+      sql: `INSERT OR IGNORE INTO instances (id, name, general_info, is_active, created_at)
+            VALUES (?, ?, ?, 1, ?)`,
       args: [instance.id, instance.name, instance.generalInfo, now],
     });
 

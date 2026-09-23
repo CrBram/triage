@@ -19,11 +19,20 @@ type ActiveInstanceContextValue = {
   activeInstanceId: string;
   activeInstance: Instance | null;
   setActiveInstanceId: (id: string) => void;
+  refreshInstances: () => Promise<void>;
   loading: boolean;
 };
 
 const ActiveInstanceContext =
   createContext<ActiveInstanceContextValue | null>(null);
+
+function pickActiveId(data: Instance[], preferred?: string | null) {
+  if (preferred && data.some((row) => row.id === preferred)) return preferred;
+  if (data.some((row) => row.id === DEFAULT_INSTANCE_ID)) {
+    return DEFAULT_INSTANCE_ID;
+  }
+  return data[0]?.id ?? DEFAULT_INSTANCE_ID;
+}
 
 export function ActiveInstanceProvider({ children }: { children: ReactNode }) {
   const [instances, setInstances] = useState<Instance[]>([]);
@@ -32,6 +41,18 @@ export function ActiveInstanceProvider({ children }: { children: ReactNode }) {
   );
   const [loading, setLoading] = useState(true);
 
+  const refreshInstances = useCallback(async () => {
+    const res = await fetch("/api/instances");
+    if (!res.ok) throw new Error("Failed to load instances");
+    const data = (await res.json()) as Instance[];
+    setInstances(data);
+
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const nextId = pickActiveId(data, stored);
+    setActiveInstanceIdState(nextId);
+    window.localStorage.setItem(STORAGE_KEY, nextId);
+  }, []);
+
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) setActiveInstanceIdState(stored);
@@ -39,18 +60,7 @@ export function ActiveInstanceProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/instances");
-        if (!res.ok) throw new Error("Failed to load instances");
-        const data = (await res.json()) as Instance[];
-        if (cancelled) return;
-        setInstances(data);
-
-        const preferred =
-          (stored && data.some((row) => row.id === stored) && stored) ||
-          data.find((row) => row.id === DEFAULT_INSTANCE_ID)?.id ||
-          data[0]?.id ||
-          DEFAULT_INSTANCE_ID;
-        setActiveInstanceIdState(preferred);
+        await refreshInstances();
       } catch {
         if (!cancelled) setInstances([]);
       } finally {
@@ -61,7 +71,7 @@ export function ActiveInstanceProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshInstances]);
 
   const setActiveInstanceId = useCallback((id: string) => {
     setActiveInstanceIdState(id);
@@ -79,9 +89,17 @@ export function ActiveInstanceProvider({ children }: { children: ReactNode }) {
       activeInstanceId,
       activeInstance,
       setActiveInstanceId,
+      refreshInstances,
       loading,
     }),
-    [instances, activeInstanceId, activeInstance, setActiveInstanceId, loading],
+    [
+      instances,
+      activeInstanceId,
+      activeInstance,
+      setActiveInstanceId,
+      refreshInstances,
+      loading,
+    ],
   );
 
   return (

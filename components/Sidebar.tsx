@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import Logo from "@/components/Logo";
 import { useActiveInstance } from "@/components/ActiveInstanceProvider";
 
-const NAV = [
+const GENERAL_NAV = [
   {
     href: "/dashboard/requests",
     label: "Requests",
@@ -19,6 +19,51 @@ const NAV = [
     icon: "/settings_icon.svg",
   },
 ] as const;
+
+const ADMIN_NAV = [
+  {
+    href: "/dashboard/instances",
+    label: "Instances",
+    icon: "/user_manage.svg",
+  },
+] as const;
+
+function NavLink({
+  href,
+  label,
+  icon,
+  active,
+}: {
+  href: string;
+  label: string;
+  icon?: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+        active
+          ? "bg-accent text-black"
+          : "text-black/70 hover:bg-black/5 hover:text-black"
+      }`}
+    >
+      {icon ? (
+        <Image
+          src={icon}
+          alt=""
+          width={16}
+          height={16}
+          className="size-4 shrink-0 opacity-80"
+          aria-hidden
+        />
+      ) : (
+        <span className="size-4 shrink-0" aria-hidden />
+      )}
+      {label}
+    </Link>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -71,56 +116,71 @@ export default function Sidebar() {
             role="listbox"
             className="absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden rounded-lg border border-black/10 bg-white py-1 shadow-card"
           >
-            {instances.map((instance) => {
-              const selected = instance.id === activeInstanceId;
-              return (
-                <li key={instance.id} role="option" aria-selected={selected}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveInstanceId(instance.id);
-                      setOpen(false);
-                    }}
-                    className={`flex w-full px-3 py-2 text-left text-sm transition-colors ${
-                      selected
-                        ? "bg-accent/60 font-semibold text-black"
-                        : "text-black/75 hover:bg-black/5 hover:text-black"
-                    }`}
-                  >
-                    {instance.name}
-                  </button>
-                </li>
-              );
-            })}
+            {instances.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-black/45">
+                No active instances
+              </li>
+            ) : (
+              instances.map((instance) => {
+                const selected = instance.id === activeInstanceId;
+                return (
+                  <li key={instance.id} role="option" aria-selected={selected}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveInstanceId(instance.id);
+                        setOpen(false);
+                      }}
+                      className={`flex w-full px-3 py-2 text-left text-sm transition-colors ${
+                        selected
+                          ? "bg-accent/60 font-semibold text-black"
+                          : "text-black/75 hover:bg-black/5 hover:text-black"
+                      }`}
+                    >
+                      {instance.name}
+                    </button>
+                  </li>
+                );
+              })
+            )}
           </ul>
         )}
       </div>
 
-      <nav className="flex flex-col gap-1">
-        {NAV.map(({ href, label, icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                active
-                  ? "bg-accent text-black"
-                  : "text-black/70 hover:bg-black/5 hover:text-black"
-              }`}
-            >
-              <Image
-                src={icon}
-                alt=""
-                width={16}
-                height={16}
-                className="size-4 shrink-0 opacity-80"
-                aria-hidden
+      <nav className="flex flex-col gap-5">
+        <div>
+          <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-black/45">
+            General
+          </p>
+          <div className="flex flex-col gap-1">
+            {GENERAL_NAV.map((item) => (
+              <NavLink
+                key={item.href}
+                {...item}
+                active={
+                  pathname === item.href || pathname.startsWith(`${item.href}/`)
+                }
               />
-              {label}
-            </Link>
-          );
-        })}
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-black/45">
+            Admin
+          </p>
+          <div className="flex flex-col gap-1">
+            {ADMIN_NAV.map((item) => (
+              <NavLink
+                key={item.href}
+                {...item}
+                active={
+                  pathname === item.href || pathname.startsWith(`${item.href}/`)
+                }
+              />
+            ))}
+          </div>
+        </div>
       </nav>
     </aside>
   );
