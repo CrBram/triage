@@ -1,14 +1,20 @@
 "use client";
 
-import type { InstructionItem } from "@/lib/pathways";
+type InstructionFields = {
+  id: string;
+  name: string;
+  description: string;
+};
 
 type InstructionAccordionItemProps = {
-  item: InstructionItem;
+  item: InstructionFields;
   open: boolean;
   namePlaceholder: string;
   descriptionPlaceholder: string;
   onToggle: () => void;
-  onChange: (patch: Partial<Pick<InstructionItem, "name" | "description">>) => void;
+  onChange: (
+    patch: Partial<Pick<InstructionFields, "name" | "description">>,
+  ) => void;
   onDelete: () => void;
 };
 

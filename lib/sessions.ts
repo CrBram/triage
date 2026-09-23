@@ -1,32 +1,10 @@
-import { createClient } from "@libsql/client";
 import { randomUUID } from "node:crypto";
 import type { TriageResult } from "@/mastra/schemas/triage";
-
-const db = createClient({
-  url: process.env.DATABASE_URL ?? "file:./triage.db",
-  authToken: process.env.DATABASE_AUTH_TOKEN,
-});
-
-let ready: Promise<void> | null = null;
-
-function ensureTable() {
-  if (!ready) {
-    ready = db
-      .execute(
-        `CREATE TABLE IF NOT EXISTS triage_sessions (
-          id TEXT PRIMARY KEY,
-          created_at TEXT NOT NULL,
-          data TEXT NOT NULL
-        )`,
-      )
-      .then(() => undefined);
-  }
-  return ready;
-}
+import { db, ensureSchema } from "@/lib/db";
 
 /** Save a finished triage result. Returns the session id. */
 export async function saveSession(result: TriageResult): Promise<string> {
-  await ensureTable();
+  await ensureSchema();
   const id = `trg-${randomUUID().slice(0, 8)}`;
   const createdAt = new Date().toISOString();
   await db.execute({
@@ -40,7 +18,7 @@ export type TriageSession = { id: string; createdAt: string } & TriageResult;
 
 /** Load a saved triage session by id. */
 export async function getSession(id: string): Promise<TriageSession | null> {
-  await ensureTable();
+  await ensureSchema();
   const rs = await db.execute({
     sql: `SELECT data FROM triage_sessions WHERE id = ?`,
     args: [id],
@@ -52,7 +30,7 @@ export async function getSession(id: string): Promise<TriageSession | null> {
 
 /** List all saved triage sessions, newest first. */
 export async function listSessions(): Promise<TriageSession[]> {
-  await ensureTable();
+  await ensureSchema();
   const rs = await db.execute(
     `SELECT data FROM triage_sessions ORDER BY created_at DESC`,
   );

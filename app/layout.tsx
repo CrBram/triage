@@ -50,8 +50,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${panton.variable} h-full antialiased`}>
-      <body className="flex h-dvh flex-col overflow-hidden">{children}</body>
+    <html lang="en" className={`${panton.variable} antialiased`}>
+      <body className="min-h-dvh">{children}</body>
     </html>
   );
 }
