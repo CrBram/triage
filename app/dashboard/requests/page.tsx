@@ -34,7 +34,7 @@ export default function RequestsPage() {
 
   return (
     <div className="pb-8">
-      <header className="mb-4">
+      <header className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 bg-background px-4 pt-8 pb-4 sm:-mx-6 sm:px-6">
         <h1 className="text-2xl font-semibold tracking-tight">Requests</h1>
         <p className="mt-1 text-sm text-black/60">
           Triage assessments for{" "}
@@ -57,9 +57,9 @@ export default function RequestsPage() {
           </p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {sessions.map((session) => (
-            <li key={session.id}>
+            <li key={session.id} className="h-full">
               <RequestCard session={session} />
             </li>
           ))}

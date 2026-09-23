@@ -210,7 +210,7 @@ export default function InstructionsPage() {
 
   return (
     <div className="pb-8">
-      <header className="mb-8 flex items-end justify-between gap-4">
+      <header className="sticky top-0 z-10 -mx-4 -mt-4 mb-8 flex items-end justify-between gap-4 bg-background px-4 pt-8 pb-4 sm:-mx-6 sm:px-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Instructions
