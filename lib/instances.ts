@@ -23,6 +23,14 @@ function mapRow(row: InstanceRow): Instance {
   };
 }
 
+export async function listInstances(): Promise<Instance[]> {
+  await ensureSchema();
+  const rs = await db.execute(
+    `SELECT id, name, general_info, created_at FROM instances ORDER BY name ASC`,
+  );
+  return rs.rows.map((row) => mapRow(row as unknown as InstanceRow));
+}
+
 export async function instanceExists(instanceId: string): Promise<boolean> {
   await ensureSchema();
   const rs = await db.execute({

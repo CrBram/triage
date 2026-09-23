@@ -3,8 +3,10 @@ import { z } from "zod";
 import { runTriageTurn } from "@/mastra/triage";
 import { listSessions, saveSession } from "@/lib/sessions";
 
-export async function GET() {
-  const sessions = await listSessions();
+export async function GET(req: Request) {
+  const instanceId =
+    new URL(req.url).searchParams.get("instanceId") ?? undefined;
+  const sessions = await listSessions(instanceId || undefined);
   return NextResponse.json(sessions);
 }
 

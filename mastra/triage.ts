@@ -1,7 +1,7 @@
 import { mastra } from "./index";
 import {
   buildTriageInstructions,
-  resolveTriageInstanceId,
+  resolveChosenInstanceId,
 } from "./prompts/instance-instructions";
 import {
   toTriageTurn,
@@ -15,11 +15,9 @@ export type TriageMessage =
 
 export async function runTriageTurn(
   messages: TriageMessage[],
-  options?: { instanceId?: string },
 ): Promise<TriageTurn> {
   const agent = mastra.getAgent("triageAgent");
-  const instanceId = options?.instanceId ?? (await resolveTriageInstanceId());
-  const instructions = await buildTriageInstructions(instanceId);
+  const instructions = await buildTriageInstructions();
 
   const response = await agent.generate(messages, {
     instructions,
@@ -29,5 +27,15 @@ export async function runTriageTurn(
     },
   });
 
-  return toTriageTurn(triageTurnOutputSchema.parse(response.object));
+  const turn = toTriageTurn(triageTurnOutputSchema.parse(response.object));
+
+  if (turn.type === "result") {
+    const instanceId = await resolveChosenInstanceId(turn.result.instanceId);
+    return {
+      type: "result",
+      result: { ...turn.result, instanceId },
+    };
+  }
+
+  return turn;
 }

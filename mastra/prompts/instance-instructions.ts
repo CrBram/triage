@@ -1,10 +1,10 @@
-import { getInstance } from "@/lib/instances";
+import { listInstances } from "@/lib/instances";
 import { listInstructions } from "@/lib/instructions";
 import {
   DEFAULT_CONSULTATION_INSTRUCTIONS,
   DEFAULT_PATHWAY_INSTRUCTIONS,
 } from "@/lib/pathways";
-import { CURRENT_INSTANCE } from "@/lib/instance";
+import { DEFAULT_INSTANCE_ID, SEED_INSTANCES } from "@/lib/instance";
 import { buildBaseInstructions } from "./base-instructions";
 
 export type InstancePromptData = {
@@ -17,18 +17,11 @@ export type InstancePromptData = {
   usedFallbackCatalog: boolean;
 };
 
-/**
- * Resolve which care instance drives this triage run.
- * Today there is only one seeded instance; later this can pick the best match.
- */
-export async function resolveTriageInstanceId(): Promise<string> {
-  return CURRENT_INSTANCE.id;
-}
-
 export async function loadInstancePromptData(
   instanceId: string,
 ): Promise<InstancePromptData | null> {
-  const instance = await getInstance(instanceId);
+  const instances = await listInstances();
+  const instance = instances.find((row) => row.id === instanceId);
   if (!instance) return null;
 
   const [pathwayRows, consultationRows] = await Promise.all([
@@ -69,6 +62,33 @@ export async function loadInstancePromptData(
   };
 }
 
+export async function loadAllInstancePromptData(): Promise<
+  InstancePromptData[]
+> {
+  const instances = await listInstances();
+  if (instances.length === 0) {
+    return SEED_INSTANCES.map((seed) => ({
+      id: seed.id,
+      name: seed.name,
+      generalInfo: seed.generalInfo,
+      pathways: DEFAULT_PATHWAY_INSTRUCTIONS.map((row) => ({
+        name: row.name,
+        description: row.description,
+      })),
+      consultations: DEFAULT_CONSULTATION_INSTRUCTIONS.map((row) => ({
+        name: row.name,
+        description: row.description,
+      })),
+      usedFallbackCatalog: true,
+    }));
+  }
+
+  const loaded = await Promise.all(
+    instances.map((instance) => loadInstancePromptData(instance.id)),
+  );
+  return loaded.filter((row): row is InstancePromptData => row !== null);
+}
+
 function formatNamedList(
   items: { name: string; description: string }[],
 ): string {
@@ -82,63 +102,52 @@ function formatNamedList(
     .join("\n");
 }
 
-/** Instance-specific block appended on top of the base instructions. */
-export function formatInstanceInstructions(data: InstancePromptData): string {
-  const general =
-    data.generalInfo.length > 0
-      ? data.generalInfo
-      : "(No additional general information provided for this instance.)";
+/** Multi-instance catalog appended on top of the base instructions. */
+export function formatAvailableInstances(
+  instances: InstancePromptData[],
+): string {
+  const blocks = instances.map((data) => {
+    const general =
+      data.generalInfo.length > 0
+        ? data.generalInfo
+        : "(No additional general information provided for this instance.)";
 
-  const fallbackNote = data.usedFallbackCatalog
-    ? "\nSome lists below use the built-in default catalog because this instance had no saved pathways and/or consultation types yet."
-    : "";
+    return `
+### ${data.name}
+- instanceId: "${data.id}"
+- General information: ${general}
+- Pathways (choose exactly one from this instance if selected):
+${formatNamedList(data.pathways)}
+- Consultation types (choose exactly one from this instance if selected):
+${formatNamedList(data.consultations)}
+`.trim();
+  });
 
   return `
-## Active care instance
-You are currently triaging for: **${data.name}** (id: ${data.id}).
-Use only this instance's configuration for pathway and consultationType choices.${fallbackNote}
+## Available care instances
+Pick exactly one instance below for the triage result. Set result.instanceId to that instance's id. Then choose pathway and consultationType only from that same instance.
 
-### General information
-${general}
-
-### Pathways (choose exactly one)
-${formatNamedList(data.pathways)}
-
-### Consultation types (choose exactly one)
-${formatNamedList(data.consultations)}
+${blocks.join("\n\n")}
 `.trim();
 }
 
 /**
- * Full agent instructions: absolute clinical base + instance overlay.
- * Falls back to the default pathway/consultation catalog when the instance
- * has no saved instruction rows.
+ * Full agent instructions: absolute clinical base + all instance overlays.
+ * The model selects the best instanceId from the catalog.
  */
-export async function buildTriageInstructions(
-  instanceId?: string,
-): Promise<string> {
-  const resolvedId = instanceId ?? (await resolveTriageInstanceId());
+export async function buildTriageInstructions(): Promise<string> {
   const base = buildBaseInstructions();
-  const instanceData = await loadInstancePromptData(resolvedId);
+  const instances = await loadAllInstancePromptData();
+  return `${base}\n\n${formatAvailableInstances(instances)}`;
+}
 
-  if (!instanceData) {
-    // Absolute last resort if the instance row is missing entirely.
-    const fallback: InstancePromptData = {
-      id: CURRENT_INSTANCE.id,
-      name: CURRENT_INSTANCE.name,
-      generalInfo: "",
-      pathways: DEFAULT_PATHWAY_INSTRUCTIONS.map((row) => ({
-        name: row.name,
-        description: row.description,
-      })),
-      consultations: DEFAULT_CONSULTATION_INSTRUCTIONS.map((row) => ({
-        name: row.name,
-        description: row.description,
-      })),
-      usedFallbackCatalog: true,
-    };
-    return `${base}\n\n${formatInstanceInstructions(fallback)}`;
-  }
-
-  return `${base}\n\n${formatInstanceInstructions(instanceData)}`;
+/** Validates / normalises an AI-chosen instance id against known instances. */
+export async function resolveChosenInstanceId(
+  candidate?: string | null,
+): Promise<string> {
+  const instances = await loadAllInstancePromptData();
+  const ids = new Set(instances.map((row) => row.id));
+  if (candidate && ids.has(candidate)) return candidate;
+  if (ids.has(DEFAULT_INSTANCE_ID)) return DEFAULT_INSTANCE_ID;
+  return instances[0]?.id ?? DEFAULT_INSTANCE_ID;
 }

@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/Button";
 import InstructionAccordionItem from "@/components/InstructionAccordionItem";
-import { CURRENT_INSTANCE } from "@/lib/instance";
+import { useActiveInstance } from "@/components/ActiveInstanceProvider";
 import type { Instruction, InstructionType } from "@/lib/instructions";
 
-const instanceUrl = `/api/instances/${CURRENT_INSTANCE.id}`;
-const instructionsUrl = `${instanceUrl}/instructions`;
-
 export default function InstructionsPage() {
+  const { activeInstanceId, activeInstance } = useActiveInstance();
+  const instanceUrl = `/api/instances/${activeInstanceId}`;
+  const instructionsUrl = `${instanceUrl}/instructions`;
+
   const [items, setItems] = useState<Instruction[]>([]);
   const [baseline, setBaseline] = useState<Record<string, Instruction>>({});
   const [generalInfo, setGeneralInfo] = useState("");
@@ -51,6 +52,8 @@ export default function InstructionsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setOpenPathwayId(null);
+    setOpenConsultationId(null);
     try {
       const [instanceRes, instructionsRes] = await Promise.all([
         fetch(instanceUrl),
@@ -72,7 +75,7 @@ export default function InstructionsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [instanceUrl, instructionsUrl]);
 
   useEffect(() => {
     void load();
@@ -213,8 +216,8 @@ export default function InstructionsPage() {
             Instructions
           </h1>
           <p className="mt-1 text-sm text-black/60">
-            Configure context, pathways and consultation types for the triage
-            AI.
+            Configure context, pathways and consultation types for{" "}
+            {activeInstance?.name ?? "this instance"}.
           </p>
         </div>
         <Button

@@ -45,13 +45,19 @@ export type ConsultationType = z.infer<typeof consultationTypeSchema>;
  * The clinical outcome of a triage, as produced by the agent.
  */
 export const triageResultSchema = z.object({
+  instanceId: z
+    .string()
+    .min(1)
+    .describe(
+      "Id of the care instance that should receive this triage request. Must match one of the available instance ids.",
+    ),
   urgency: urgencySchema,
   pathway: pathwaySchema.describe(
-    "The single most likely care pathway for the patient. Must match a pathway name from the active care instance.",
+    "The single most likely care pathway for the patient. Must match a pathway name from the chosen care instance.",
   ),
   next: nextStepSchema,
   consultationType: consultationTypeSchema.describe(
-    "The consultation type to schedule or hand off. Must match a consultation type from the active care instance.",
+    "The consultation type to schedule or hand off. Must match a consultation type from the chosen care instance.",
   ),
   summary: z
     .string()
