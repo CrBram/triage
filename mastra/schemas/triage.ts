@@ -19,7 +19,8 @@ export const PATHWAYS = [
   "Gastroenterology",
   "General Practice",
 ] as const;
-export const pathwaySchema = z.enum(PATHWAYS);
+/** @deprecated Prefer instance instruction names; kept as default seed/fallback catalog. */
+export const pathwaySchema = z.string().min(1);
 export type Pathway = z.infer<typeof pathwaySchema>;
 
 /** What should happen next, from the hospital's point of view. */
@@ -27,7 +28,7 @@ export const NEXT_STEPS = ["emergency", "schedule", "self-care"] as const;
 export const nextStepSchema = z.enum(NEXT_STEPS);
 export type NextStep = z.infer<typeof nextStepSchema>;
 
-/** Consultation types the hospital's scheduling system supports. */
+/** Consultation types the hospital's scheduling system supports by default. */
 export const CONSULTATION_TYPES = [
   "emergency-assessment",
   "first-appointment",
@@ -36,7 +37,8 @@ export const CONSULTATION_TYPES = [
   "lung-function-test",
   "gastroscopy",
 ] as const;
-export const consultationTypeSchema = z.enum(CONSULTATION_TYPES);
+/** @deprecated Prefer instance instruction names; kept as default seed/fallback catalog. */
+export const consultationTypeSchema = z.string().min(1);
 export type ConsultationType = z.infer<typeof consultationTypeSchema>;
 
 /**
@@ -45,10 +47,12 @@ export type ConsultationType = z.infer<typeof consultationTypeSchema>;
 export const triageResultSchema = z.object({
   urgency: urgencySchema,
   pathway: pathwaySchema.describe(
-    "The single most likely care pathway for the patient.",
+    "The single most likely care pathway for the patient. Must match a pathway name from the active care instance.",
   ),
   next: nextStepSchema,
-  consultationType: consultationTypeSchema,
+  consultationType: consultationTypeSchema.describe(
+    "The consultation type to schedule or hand off. Must match a consultation type from the active care instance.",
+  ),
   summary: z
     .string()
     .describe(

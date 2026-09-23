@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { db, ensureSchema } from "@/lib/db";
+import { instanceExists } from "@/lib/instances";
 
+export { instanceExists };
 export type InstructionType = "pathway" | "consultation";
 
 export type Instruction = {
@@ -36,15 +38,6 @@ function mapRow(row: InstructionRow): Instruction {
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
-}
-
-export async function instanceExists(instanceId: string): Promise<boolean> {
-  await ensureSchema();
-  const rs = await db.execute({
-    sql: `SELECT id FROM instances WHERE id = ?`,
-    args: [instanceId],
-  });
-  return rs.rows.length > 0;
 }
 
 export async function listInstructions(

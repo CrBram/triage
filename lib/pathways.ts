@@ -1,8 +1,6 @@
 import {
   CONSULTATION_TYPES,
   PATHWAYS,
-  type ConsultationType,
-  type Pathway,
 } from "@/mastra/schemas/triage";
 
 export type InstructionItem = {
@@ -10,6 +8,9 @@ export type InstructionItem = {
   name: string;
   description: string;
 };
+
+type DefaultPathway = (typeof PATHWAYS)[number];
+type DefaultConsultation = (typeof CONSULTATION_TYPES)[number];
 
 /** Default pathway copy for an instance — editable in the dashboard UI. */
 export const DEFAULT_PATHWAY_INSTRUCTIONS: InstructionItem[] = PATHWAYS.map(
@@ -32,7 +33,7 @@ function slugify(value: string) {
   return value.toLowerCase().replace(/\s+/g, "-");
 }
 
-function defaultPathwayDescription(pathway: Pathway): string {
+function defaultPathwayDescription(pathway: DefaultPathway): string {
   switch (pathway) {
     case "Emergency Care":
       return "Life-threatening or rapidly worsening symptoms that need immediate emergency assessment (e.g. chest pain with collapse, severe breathing difficulty, stroke signs).";
@@ -47,7 +48,7 @@ function defaultPathwayDescription(pathway: Pathway): string {
   }
 }
 
-function defaultConsultationDescription(type: ConsultationType): string {
+function defaultConsultationDescription(type: DefaultConsultation): string {
   switch (type) {
     case "emergency-assessment":
       return "Immediate clinical assessment for emergency or high-urgency presentations.";

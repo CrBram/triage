@@ -76,7 +76,7 @@ export default function InstructionAccordionItem({
               onChange={(e) => onChange({ description: e.target.value })}
               rows={3}
               placeholder={descriptionPlaceholder}
-              className="w-full resize-y rounded-lg border border-black/10 bg-background/40 px-3 py-2.5 text-sm leading-relaxed text-black outline-none transition-colors placeholder:text-black/35 focus:border-accent focus:bg-white"
+              className="w-full resize-none rounded-lg border border-black/10 bg-background/40 px-3 py-2.5 text-sm leading-relaxed text-black outline-none transition-colors placeholder:text-black/35 focus:border-accent focus:bg-white"
             />
           </label>
         </div>

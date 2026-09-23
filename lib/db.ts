@@ -20,9 +20,12 @@ export function ensureSchema() {
         CREATE TABLE IF NOT EXISTS instances (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
+          general_info TEXT NOT NULL DEFAULT '',
           created_at TEXT NOT NULL
         )
       `);
+
+      await ensureInstanceColumns();
 
       await db.execute(`
         CREATE TABLE IF NOT EXISTS instructions (
@@ -57,6 +60,17 @@ export function ensureSchema() {
     })();
   }
   return ready;
+}
+
+/** Add columns introduced after the initial schema for existing local DBs. */
+async function ensureInstanceColumns() {
+  const cols = await db.execute(`PRAGMA table_info(instances)`);
+  const names = new Set(cols.rows.map((row) => String(row.name)));
+  if (!names.has("general_info")) {
+    await db.execute(
+      `ALTER TABLE instances ADD COLUMN general_info TEXT NOT NULL DEFAULT ''`,
+    );
+  }
 }
 
 async function seedDefaultInstance() {
