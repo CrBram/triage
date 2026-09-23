@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runTriageTurn } from "@/mastra/triage";
-import { saveSession } from "@/lib/sessions";
+import { listSessions, saveSession } from "@/lib/sessions";
+
+export async function GET() {
+  const sessions = await listSessions();
+  return NextResponse.json(sessions);
+}
 
 const requestSchema = z.object({
   messages: z

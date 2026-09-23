@@ -90,8 +90,6 @@ export const triageAgent = new Agent({
   description:
     "Guides a patient from a free-text symptom description to an urgency level, care pathway and consultation type, asking one follow-up question at a time.",
   instructions,
-  // Primary gets a couple of retries for transient blips; fallbacks get one
-  // each so a bad day at one provider doesn't turn into a 30s wait.
   model: TRIAGE_MODEL_CHAIN.map((model, index) => ({
     model,
     maxRetries: index === 0 ? 2 : 1,

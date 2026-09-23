@@ -36,8 +36,10 @@ export async function saveSession(result: TriageResult): Promise<string> {
   return id;
 }
 
+export type TriageSession = { id: string; createdAt: string } & TriageResult;
+
 /** Load a saved triage session by id. */
-export async function getSession(id: string) {
+export async function getSession(id: string): Promise<TriageSession | null> {
   await ensureTable();
   const rs = await db.execute({
     sql: `SELECT data FROM triage_sessions WHERE id = ?`,
@@ -45,5 +47,14 @@ export async function getSession(id: string) {
   });
   const row = rs.rows[0];
   if (!row) return null;
-  return JSON.parse(String(row.data)) as { id: string; createdAt: string } & TriageResult;
+  return JSON.parse(String(row.data)) as TriageSession;
+}
+
+/** List all saved triage sessions, newest first. */
+export async function listSessions(): Promise<TriageSession[]> {
+  await ensureTable();
+  const rs = await db.execute(
+    `SELECT data FROM triage_sessions ORDER BY created_at DESC`,
+  );
+  return rs.rows.map((row) => JSON.parse(String(row.data)) as TriageSession);
 }
